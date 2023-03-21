@@ -7,18 +7,18 @@ class Cell:
         self.value = value
         self.viable_values = []
 
-class RCBCellCollection:
-    """A collection of 9 Cell to represent every row, column and box.  Used for easier validation solving"""
-    def __init__(self):
-        self.member_cells = []
+#class RCBCellCollection:
+#    """A collection of 9 Cell to represent every row, column and box.  Used for easier validation solving"""
+#    def __init__(self):
+#        self.member_cells = []
         
 class SudokuPuzzle:
     """defines an entire sudoku puzzle grid"""
     def __init__(self,puzzle_string=None):
         self.data_map = []
-        self.row_collection = []
-        self.col_collection = []
-        self.box_collection = []
+        #self.row_collection = []
+        #self.col_collection = []
+        #self.box_collection = []
         
         if puzzle_string is None:
             self.generate()
@@ -63,18 +63,19 @@ class SudokuPuzzle:
             if cell_data == 0:
                 cell_data = ' '
             new_cell = Cell(b,r,c,cell_data)
+            
             self.data_map.append(new_cell)
 
             #add each Cell object to a corresponding 'row', 'column' or 'box list for easier lookups later
-            if len(self.row_collection) < r:
-                self.row_collection.append([])
-            if len(self.col_collection) < c:
-                self.col_collection.append([])
-            if len(self.box_collection) < b:
-                self.box_collection.append([])
-            self.row_collection[r-1].append(new_cell)
-            self.col_collection[c-1].append(new_cell)
-            self.box_collection[b-1].append(new_cell)
+            #if len(self.row_collection) < r:
+            #    self.row_collection.append([])
+            #if len(self.col_collection) < c:
+            #    self.col_collection.append([])
+            #if len(self.box_collection) < b:
+            #    self.box_collection.append([])
+            #self.row_collection[r-1].append(new_cell)
+            #self.col_collection[c-1].append(new_cell)
+            #self.box_collection[b-1].append(new_cell)
             
             #if we reach end of the column, reset colum to 1 and increment row by 1
             if c == 9: 
@@ -94,81 +95,96 @@ class SudokuPuzzle:
             if (i.row == 3 or i.row == 6) and i.column == 9:
                 print('------+-------+------')
                 
+    def tst(self):
+
+        #check for single viable values in each row, col and box (even though the cell may have more than 1 viable value)
+        for z in range(1,10):
+            print('######',z,'######')
+            row = []
+            col = []
+            box = []          
+
+            for cell in [x for x in self.data_map if x.value == ' ' and x.row == z]:
+                for cell_viable in cell.viable_values:
+                     row.append(cell_viable)
+            for cell in [x for x in self.data_map if x.value == ' ' and x.column == z]:
+                for cell_viable in cell.viable_values:
+                     col.append(cell_viable)
+            for cell in [x for x in self.data_map if x.value == ' ' and x.box == z]:
+                for cell_viable in cell.viable_values:
+                     box.append(cell_viable)
+
+            for i in range(1,10):
+                if row.count(i) == 1:
+                    for cell in [x for x in self.data_map if x.value == ' ' and x.row == z]:
+                        if i in cell.viable_values:
+                            cell.value = i
+                if col.count(i) == 1:
+                    for cell in [x for x in self.data_map if x.value == ' ' and x.column == z]:
+                        if i in cell.viable_values:
+                            cell.value = i
+                if box.count(i) == 1:
+                    for cell in [x for x in self.data_map if x.value == ' ' and x.box == z]:
+                        if i in cell.viable_values:
+                            cell.value = i
+
+            self.show()
+
     def solve(self):
         """identifies solution to current puzzle"""
 
         change_made = True
         while change_made:
             change_made = False
-            #check to see if any cells have only 1 viable number
-            for cell in self.data_map:
+
+            for cell in [x for x in self.data_map if x.value == ' ']:
+                self.__populate_viable_values(cell)
                 
-                #print('---------------------------------')
-                #print('row:',cell.row,'col:',cell.column)
-                if cell.value == ' ':
-                    self.__populate_viable_values(cell)
-                    #print(cell.viable_values)
-                    if len(cell.viable_values) == 1:
-                        change_made = True
-                        cell.value = cell.viable_values.pop()
+                #check to see if any cells have only 1 viable number
+                if len(cell.viable_values) == 1:
+                    change_made = True
+                    cell.value = cell.viable_values.pop()
 
 
                 
-            #check each row, col and box for whether
+
+
+
+ 
 
         if self.validate():      
             self.show()
         else:
             print('Invalid solution')
 
-
-
-
-
-
     def __populate_viable_values(self,cell):
-        """for each cell, identiy which values are viable values based on existing values in row, column and box"""
+        """for passed cell, iterate across all data to identiy which values are viable values based on existing values in relevant row, column and box"""
         row_map = []
         col_map = []
         box_map = []
         cell.viable_values = []
-        for other_cell in self.data_map:
-            #print('checking against other row:',other_cell.row,'col:',other_cell.column) 
-            if (other_cell.row == cell.row and other_cell.column == cell.column) or other_cell.value == ' ':
-                #print('cell row and col match, pass')
-                continue
+        for other_cell in [x for x in self.data_map if x != cell and x.value != ' ']:
             if other_cell.row == cell.row and cell.value not in row_map:
-                #print('rows match and cell value not in row_map, adding',other_cell.value,'to row map')
                 row_map.append(other_cell.value)
             if other_cell.column == cell.column and cell.value not in col_map:
-                #print('columns match and cell value not in col_map, adding',other_cell.value,'to col map')
                 col_map.append(other_cell.value)
             if other_cell.box == cell.box and cell.value not in box_map:
-                #print('box match and cell value not in box_map, adding',other_cell.value,'to box map')
                 box_map.append(other_cell.value)
 
-        #print('row map:',row_map)
-        #print('col map:',col_map)
-        #print('box map:',box_map)
         for i in range(1,10):
             if i not in row_map and i not in col_map and i not in box_map and i not in cell.viable_values:
-                #print(i,'not in any maps, adding to viable_varibles')
                 cell.viable_values.append(i)
         
     def validate(self):
         """checks that puzzle in current configuration is valid"""
         #iterate each cell as a reference to check other cells against
-        for checked_cell in self.data_map: 
-            if checked_cell.value == ' ':
-                continue
-            #iterate all cells to test against the cell in focus
-            for other_cell in self.data_map:
-                if checked_cell.row == other_cell.row and checked_cell.column == other_cell.column: 
-                    break
-                elif checked_cell.value == other_cell.value and (checked_cell.row == other_cell.row or checked_cell.column == other_cell.column or checked_cell.box == other_cell.box):
-                    print('Clashing value: row:', checked_cell.row,'col:', checked_cell.column,'with row:',other_cell.row,'col:', other_cell.column)
-                    raise ValueError('Validation failed')
-                    return False
+        for cell in [x for x in self.data_map if x.value != ' ']: 
+            #iterate all other cells to test whether it has a same value in the row, column or box
+            for other_cell in [y for y in self.data_map if cell != y and y.value != ' ' and (y.row == cell.row or y.column == cell.column or y.box == cell.box) and y.value == cell.value]: 
+                print('Clashing value: row:', cell.row,'col:', cell.column,'with row:',other_cell.row,'col:', other_cell.column)
+                raise ValueError('Validation failed')
+                return False
+                
         return True
 
         
@@ -191,13 +207,10 @@ class SudokuPuzzle:
 puzzle = '000000000980501607000007094090000048005008300000496100078060450000085000060300902'
 
 game = SudokuPuzzle(puzzle)
+game.show()
+print('#####################')
 game.solve()
 
-
-
-            
-        #set(this_cell.viable_values).intersection(this_row)
-            
 
 
 #if __name__ == '__main__':
