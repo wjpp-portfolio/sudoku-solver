@@ -84,7 +84,7 @@ class SudokuPuzzle:
         print('Filled cells:',self.filled_cells)
 
     def solve(self):
-        """identifies solution to current puzzle"""
+        """identifies solution to current puzzle firstly through deductions, then backtracking"""
         change_made = True
 
         while change_made:
@@ -97,7 +97,7 @@ class SudokuPuzzle:
                     cell.value = cell.viable_values.pop()
                     
         if self.validate() and self.filled_cells != 81:
-            pass #self.backtrack()
+            self.__backtrack()
             
         if self.validate() and self.filled_cells == 81:
             return True
@@ -106,71 +106,49 @@ class SudokuPuzzle:
 
 
 
-    def backtrack(self):
+    def __backtrack(self):
         """attempt a value in a box (based on viable values) and see if it leads to a solution"""
-        for cell in [x for x in self.data_map if x.value == ' ']:
-            for cell_v in cell.viable_values:
-                temp_game = SudokuPuzzle(self.export())
-                #print(temp_game)
-                for temp_cell in [x for x in temp_game.data_map if x.row == cell.row and x.column == cell.column]:
-                    temp_cell.value = cell_v
-                    print(self.export())
-                    print(temp_game.export())
-                    try:
-                        solved = temp_game.solve()
-                    except:
-                        continue
-                    
-                        if solved:
-                            self.parse_data_string(temp_game.export())
-                            return True
-                        else:
-                            strength = temp_game.filled_cells
-       # print('brute force failed')
+        pass
+        #for cell in [x for x in self.data_map if x.value == ' ']:
+        #    for cell_v in cell.viable_values:
 
        
     def __deductions(self):
         """for each row, box and column, identify any viable values that cannot exist based on neighbouring row/box/column and remove them"""
         for cell in [x for x in self.data_map if x.value == ' ']:
-            #-----Box
+
             self.__eliminate_nonviable_values_based_on_neighbour_values(cell)
-            viable_values_in_box = []
-            for box_cell in [x for x in self.data_map if x.value == ' ' and x != cell and x.box == cell.box]:
-                for box_viable in box_cell.viable_values:
-                    viable_values_in_box.append(box_viable)
-
-            for cell_v in [y for y in cell.viable_values if y not in viable_values_in_box]:
-                for box_v in viable_values_in_box:
-                    try:
-                        cell.viable_values.remove(box_v)
-                    except KeyError:
-                        pass
-            #-----Row
-            self.__eliminate_nonviable_values_based_on_neighbour_values(cell)            
             viable_values_in_row = []
-            for row_cell in [x for x in self.data_map if x.value == ' ' and x != cell and x.row == cell.row]:
-                for row_viable in row_cell.viable_values:
-                    viable_values_in_row.append(row_viable)
-
+            viable_values_in_col = []
+            viable_values_in_box = []
+            for sub_cell in [x for x in self.data_map if x.value == ' ' and x != cell]:
+                for sub_viable in sub_cell.viable_values:
+                    if sub_cell.row == cell.row:
+                        viable_values_in_row.append(sub_viable)
+                    if sub_cell.column == cell.column:
+                        viable_values_in_col.append(sub_viable)
+                    if sub_cell.box == cell.box:
+                        viable_values_in_box.append(sub_viable)
+                        
             for cell_v in [y for y in cell.viable_values if y not in viable_values_in_row]:
                 for row_v in viable_values_in_row:
                     try:
                         cell.viable_values.remove(row_v)
                     except KeyError:
-                        pass
-            #-----Column
-            self.__eliminate_nonviable_values_based_on_neighbour_values(cell)
-            viable_values_in_col = []
-            for col_cell in [x for x in self.data_map if x.value == ' ' and x != cell and x.column == cell.column]:
-                for col_viable in col_cell.viable_values:
-                    viable_values_in_col.append(col_viable)
-
+                        pass            
             for cell_v in [y for y in cell.viable_values if y not in viable_values_in_col]:
                 for col_v in viable_values_in_col:
                     try:
                         cell.viable_values.remove(col_v)
                     except KeyError:
                         pass
+            for cell_v in [y for y in cell.viable_values if y not in viable_values_in_box]:
+                for box_v in viable_values_in_box:
+                    try:
+                        cell.viable_values.remove(box_v)
+                    except KeyError:
+                        pass
+            
 
     def __eliminate_nonviable_values_based_on_neighbour_values(self,cell):
         """for passed cell, iterate across all data to identiy which values could be valid values based on existing values in relevant row, column and box"""
@@ -212,8 +190,8 @@ class SudokuPuzzle:
 
 
 #def main():
-puzzle = '000040610600000000501002084090007002000080000210306700105063400960015000300000000'
-
+#puzzle = '000040610600000000501002084090007002000080000210306700105063400960015000300000000'
+puzzle = '207010605095600020800004000000000260000726018000090030050000300604530000012079000'
 game = SudokuPuzzle(puzzle)
 game.show()
 print('#####################')
