@@ -129,26 +129,23 @@ class SudokuPuzzle:
                         viable_values_in_col.append(sub_viable)
                     if sub_cell.box == cell.box:
                         viable_values_in_box.append(sub_viable)
-                        
+                       
+            values_to_remove = []
             for cell_v in [y for y in cell.viable_values if y not in viable_values_in_row]:
                 for row_v in viable_values_in_row:
-                    try:
-                        cell.viable_values.remove(row_v)
-                    except KeyError:
-                        pass            
+                    values_to_remove.append(row_v)           
             for cell_v in [y for y in cell.viable_values if y not in viable_values_in_col]:
                 for col_v in viable_values_in_col:
-                    try:
-                        cell.viable_values.remove(col_v)
-                    except KeyError:
-                        pass
+                    values_to_remove.append(col_v)   
             for cell_v in [y for y in cell.viable_values if y not in viable_values_in_box]:
                 for box_v in viable_values_in_box:
-                    try:
-                        cell.viable_values.remove(box_v)
-                    except KeyError:
-                        pass
-            
+                    values_to_remove.append(box_v)
+                    
+            for value in values_to_remove:
+                try:
+                    cell.viable_values.remove(value)
+                except KeyError:
+                    pass
 
     def __eliminate_nonviable_values_based_on_neighbour_values(self,cell):
         """for passed cell, iterate across all data to identiy which values could be valid values based on existing values in relevant row, column and box"""
@@ -190,8 +187,8 @@ class SudokuPuzzle:
 
 
 #def main():
-#puzzle = '000040610600000000501002084090007002000080000210306700105063400960015000300000000'
-puzzle = '207010605095600020800004000000000260000726018000090030050000300604530000012079000'
+puzzle = '000040610600000000501002084090007002000080000210306700105063400960015000300000000'
+#puzzle = '207010605095600020800004000000000260000726018000090030050000300604530000012079000'
 game = SudokuPuzzle(puzzle)
 game.show()
 print('#####################')
