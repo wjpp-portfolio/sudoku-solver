@@ -87,7 +87,7 @@ class SudokuPuzzle:
         """identifies solution to current puzzle"""
         change_made = True
 
-        while True:
+        while change_made:
             change_made = False
             self.__deductions()
                 
@@ -97,7 +97,7 @@ class SudokuPuzzle:
                     cell.value = cell.viable_values.pop()
                     
         if self.validate() and self.filled_cells != 81:
-            self.backtrack()
+            pass #self.backtrack()
             
         if self.validate() and self.filled_cells == 81:
             return True
