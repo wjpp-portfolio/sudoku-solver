@@ -194,13 +194,14 @@ class SudokuPuzzle:
 def main():       
     string_input = input('Enter numbers from Sudoku grid starting from top left and enter across and down with the last digit being bottom right box. Use zero (0) for empty spaces: ')
     #string_input = '010000370000006082000400000003510000700908003000023900000004000820300000065000010'
+    print('Inputted string:',string_input)
     game = SudokuPuzzle(string_input)
     game.show()
     print('')
     if game.solve():
         print('Solution found!')
         game.show()
-        print(game.export())
+        print('Solution string:',game.export())
     else:
         print('Solution NOT found')
         game.show()
