@@ -9,15 +9,14 @@ class Cell:
         if value == 0:
             self.value = ' '
             self.viable_values = {1,2,3,4,5,6,7,8,9}
-        else:
-            self.viable_values = set()
                 
 class SudokuPuzzle:
     """defines an entire sudoku puzzle grid"""
     def __init__(self,puzzle_string):
         self.data_map = []
 
-        self.parse_data_string(puzzle_string)
+        if not self.parse_data_string(puzzle_string):
+            raise ValueError('Puzzle string parse failed')
         if not self.validate():
             raise ValueError('Invalid game configuration passed')
             
@@ -25,12 +24,11 @@ class SudokuPuzzle:
         """ingests passed puzzle string into Cell objects"""      
         if len(passed_string) != 81:
             raise ValueError("Passed string not 81 characters long")
-            return
+            return False
         
         self.data_map = []
-        r = 1 #row
-        c = 1 #column
-        b = 1 #9x9 box
+        r,c,b = 1,1,1 #row, col, box
+
         box_col_1,box_col_2,box_col_3 = 1,2,3 
         offset = 0 #offset increments by 3 at the 4th row and 3 again at the 7th row, used to work out which 'box' we are in
         
@@ -39,6 +37,7 @@ class SudokuPuzzle:
                 cell_data = int(i)
             except:
                 raise ValueError("Non interger present in game string")
+                return False
                    
             # to calculate which of the 9 boxes (3x3 grids) this cell is in
             if r > 6:
@@ -61,7 +60,18 @@ class SudokuPuzzle:
                 r += 1
             else:
                 c += 1
-            
+                
+        return True
+                        
+    def validate(self):
+        """checks that puzzle in current configuration is valid"""
+        self.filled_cells = 0
+        for cell in [x for x in self.data_map if x.value != ' ']:
+            self.filled_cells += 1
+            for other_cell in [y for y in self.data_map if y != cell and y.value != ' ' and y.value == cell.value and (y.row == cell.row or y.column == cell.column or y.box == cell.box)]: 
+                return False
+        return True
+    
     def show(self):
         """prints Sudoku grid to console"""
         for i in self.data_map:
@@ -85,8 +95,8 @@ class SudokuPuzzle:
                 
             for cell in [x for x in self.data_map if x.value == ' ']:
                 if len(cell.viable_values) == 1:
-                    change_made = True
                     cell.value = cell.viable_values.pop()
+                    change_made = True
                     
         if self.validate() and self.filled_cells != 81:
             self.__backtrack()
@@ -96,66 +106,40 @@ class SudokuPuzzle:
         else:
             return False
 
-
-
     def __backtrack(self):
-        """attempt a value in a box (based on viable values) and see if it leads to a solution"""
-        game_state_backup = self.export()
-        counter = 0
+        """creates a new SudokuPuzzle object to work through backtrack until every viable value for every cell has been evaluted."""
         cell_count = 0
-        empty_cells = []
-        temp_game = SudokuPuzzle(game_state_backup)
-        temp_game.__deductions()
-        temp_vv = []
+        temp_game = SudokuPuzzle(self.export())
+        empty_cells = [] #creates a list of just empty cells for working through
+        temp_vv = [] #creates a list of 'set' for each cells viable values.  Maintains same index as empty_cells.  Ensure we can re-set the viable-values if we backtrack
         for cell in [x for x in temp_game.data_map if x.value == ' ']:     
             temp_vv.append(cell.viable_values.copy())
             empty_cells.append(cell)
 
         while True:
-            counter += 1
-            #print('##########',cell_count,'##########')
-            #print('cell r',empty_cells[cell_count].row,'col',empty_cells[cell_count].column,'tvv:',temp_vv[cell_count])
-
-            #print('cell r',empty_cells[cell_count].row,'col',empty_cells[cell_count].column,'vv:',empty_cells[cell_count].viable_values)
-
-            #print(temp_vv)
             if cell_count < 0:
-                print('exhausted all viable values, unsolved')
-                print('iterations:',counter)
+                print('Exhausted all viable values, unsolved')
                 return
-            
-            if len(empty_cells[cell_count].viable_values) == 0: #or not temp_game.validate():
-                #print('vv len 0')
+            #if there are no further viable values for this cell, reset the viable values, reset the cell value and step back 1
+            if len(empty_cells[cell_count].viable_values) == 0:
                 empty_cells[cell_count].viable_values = temp_vv[cell_count].copy()
                 empty_cells[cell_count].value = ' '
-                #temp_game.show()
                 cell_count -= 1
-                #print('stepping back cell count (now',cell_count,')')
+            #assign cell a value from viable_values list, update neighbouring viable values
             else:
                 empty_cells[cell_count].value = empty_cells[cell_count].viable_values.pop()
-                #temp_game.__deductions()
                 temp_game.__eliminate_nonviable_values_based_on_neighbour_values(empty_cells[cell_count])
-                #print('val set to', empty_cells[cell_count].value)
-                
-                
+                            
                 if temp_game.validate():
-                #print('validated OK')
                     if temp_game.filled_cells == 81:
-                        #temp_game.show()
                         self.parse_data_string(temp_game.export())
-                        #for i in range(81):
-                            #self.data_map[i] = temp_game.data_map[i]
                         return
                     else:
-                        cell_count += 1
-                        #print('advancing cell count (now',cell_count,')')
-            
-
-            
+                        cell_count += 1          
+           
     def __deductions(self):
         """for each row, box and column, identify any viable values that cannot exist based on neighbouring row/box/column and remove them"""
         for cell in [x for x in self.data_map if x.value == ' ']:
-
             self.__eliminate_nonviable_values_based_on_neighbour_values(cell)
             viable_values_in_row = []
             viable_values_in_col = []
@@ -181,17 +165,10 @@ class SudokuPuzzle:
                     values_to_remove.append(box_v)
                     
             for value in values_to_remove:
-                try:
-                    
+                try:   
                     cell.viable_values.remove(value)
                 except KeyError:
                     pass
-
-            #if len(cell.viable_values) == 0:
-                #raise ValueError('Validation failed - cell with no viable value: row:', cell.row,'col:', cell.column)
-                #return False
-
-        #return True
 
     def __eliminate_nonviable_values_based_on_neighbour_values(self,cell):
         """for passed cell, iterate across all data to identiy which values could be valid values based on existing values in relevant row, column and box"""
@@ -201,19 +178,7 @@ class SudokuPuzzle:
 
         for i in range(1,10):
             if i in neighbour_values and i in cell.viable_values:
-                #print('Nonviable - removing',i,'from cell',cell.row,cell.column,'viable values')
                 cell.viable_values.remove(i)
-                    
-    def validate(self):
-        """checks that puzzle in current configuration is valid"""
-        self.filled_cells = 0
-        for cell in [x for x in self.data_map if x.value != ' ']:
-            self.filled_cells += 1
-            for other_cell in [y for y in self.data_map if y != cell and y.value != ' ' and y.value == cell.value and (y.row == cell.row or y.column == cell.column or y.box == cell.box)]: 
-                #raise ValueError('Validation failed - clashing value: row:', cell.row,'col:', cell.column,'with row:',other_cell.row,'col:', other_cell.column)
-                return False
-            
-        return True
 
     def export(self):
         """writes puzzle data to string"""
@@ -226,22 +191,19 @@ class SudokuPuzzle:
 
         return export_string
             
-
-
-#def main():
-puzzle = '010000370000006082000400000003510000700908003000023900000004000820300000065000010'
-game = SudokuPuzzle(puzzle)
-game.show()
-print('')
-if game.solve():
-    print('Solution found!')
+def main():       
+    string_input = input('Enter numbers from Sudoku grid starting from top left and enter across and down with the last digit being bottom right box. Use zero (0) for empty spaces: ')
+    #string_input = '010000370000006082000400000003510000700908003000023900000004000820300000065000010'
+    game = SudokuPuzzle(string_input)
     game.show()
-    print(game.export())
-else:
-    print('Solution not found')
-    game.show()
+    print('')
+    if game.solve():
+        print('Solution found!')
+        game.show()
+        print(game.export())
+    else:
+        print('Solution NOT found')
+        game.show()
     
-
-
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    main()
