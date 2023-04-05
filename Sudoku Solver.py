@@ -207,8 +207,8 @@ class SudokuPuzzle:
         return export_string
             
 def main():       
-    #string_input = input('Enter numbers from Sudoku grid starting from top left and enter across and down with the last digit being bottom right box. Use zero (0) for empty spaces: ')
-    string_input = '010000370000006082000400000003510000700908003000023900000004000820300000065000010'
+    string_input = input('Enter numbers from Sudoku grid starting from top left and enter across and down with the last digit being bottom right box. Use zero (0) for empty spaces: ')
+    #string_input = '010000370000006082000400000003510000700908003000023900000004000820300000065000010'
     print('Inputted string:',string_input)
     game = SudokuPuzzle(string_input)
     game.show()
